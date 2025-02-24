@@ -1,6 +1,6 @@
-import re
 from requests import get
 from bs4 import BeautifulSoup
+import re
 
 BASE_URL = "https://uk.wikipedia.org"
 URL = f"{BASE_URL}/wiki/Список_країн"
