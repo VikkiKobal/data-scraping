@@ -45,10 +45,9 @@ with open(FILE_NAME, "w", encoding="utf-8") as file:
                             official_languages = data_text
                             break
 
-            official_languages = official_languages.replace('і ', ' і').replace(' ,', ',').replace(' , ', ', ')
 
-            official_languages = re.sub(r'\d+', '', official_languages) 
-            official_languages = re.sub(r'\[.*?\]', '', official_languages)
+            official_languages = re.sub(r'\d+', '', official_languages)  # видалення чисел
+            official_languages = re.sub(r'\[.*?\]', '', official_languages)  # видалення квадратних дужок
 
             country_info += official_languages
             file.write(f"{country_info}\n")
