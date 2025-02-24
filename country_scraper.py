@@ -46,8 +46,8 @@ with open(FILE_NAME, "w", encoding="utf-8") as file:
                             break
 
 
-            official_languages = re.sub(r'\d+', '', official_languages)  # видалення чисел
-            official_languages = re.sub(r'\[.*?\]', '', official_languages)  # видалення квадратних дужок
+            official_languages = re.sub(r'\d+', '', official_languages)
+            official_languages = re.sub(r'\[.*?\]', '', official_languages) 
 
             country_info += official_languages
             file.write(f"{country_info}\n")
