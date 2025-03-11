@@ -1,6 +1,5 @@
 import scrapy
 
-
 class CssSpider(scrapy.Spider):
     name = 'css_spider'
     start_urls = ['https://uk.wikipedia.org/wiki/Список_країн']
@@ -40,12 +39,12 @@ class CssSpider(scrapy.Spider):
             rows = infobox.css('tr')
 
             for row in rows:
-                header = row.css('th *::text').get()  
+                header = row.css('th *::text').get() 
                 data = row.css('td *::text').getall()  
 
                 if header and data:
                     header = header.strip()
-                    data = ' '.join([d.strip() for d in data if d.strip()]).strip()
+                    data = ' '.join([d.strip() for d in data]).strip()
 
                     if 'Столиця' in header:
                         country_details['Столиця'] = data
@@ -57,6 +56,21 @@ class CssSpider(scrapy.Spider):
                         country_details['Валюта'] = data
                     elif 'Телефонний код' in header:
                         country_details['Телефонний код'] = data
+
+            # Додаткові перевірки для різних структур таблиці
+            if 'Столиця' not in country_details:
+                capital = infobox.css("td b a[title*='Столиця'] ~ a::text").get()
+                if not capital:
+                    capital = infobox.css("td:contains('Столиця') ~ td a::text").get()
+                if capital:
+                    country_details['Столиця'] = capital.strip()
+                else:
+                    capital = infobox.css("td:contains('Столиця') ~ td::text").get()
+                    if capital:
+                        country_details['Столиця'] = capital.strip()
+
+            if 'Столиця' not in country_details:
+                country_details['Столиця'] = 'Невідомо'
 
         yield {
             'Країна': country_name,
