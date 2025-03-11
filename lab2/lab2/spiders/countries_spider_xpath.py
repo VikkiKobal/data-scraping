@@ -1,4 +1,5 @@
 import scrapy
+
 class XpathSpider(scrapy.Spider):
     name = 'xpath_spider'
     start_urls = ['https://uk.wikipedia.org/wiki/Список_країн']
@@ -8,8 +9,7 @@ class XpathSpider(scrapy.Spider):
             'countries_xpath.json': {'format': 'json', 'encoding': 'utf8', 'indent': 4},
             'countries_xpath.xml': {'format': 'xml', 'encoding': 'utf8', 'indent': 4},
             'countries_xpath.csv': {'format': 'csv', 'encoding': 'utf8'},
-        },
-        'FEED_EXPORT_FIELDS': ['Країна', 'URL', 'Столиця', 'Офіційні мови', 'Незалежність', 'Валюта', 'Телефонний код']
+        }
     }
 
     def parse(self, response):
@@ -28,9 +28,6 @@ class XpathSpider(scrapy.Spider):
                 )
 
     def parse_country_info(self, response):
-        country_name = response.meta['country_name']
-        country_url = response.meta['country_url']
-
         country_details = {}
         infobox = response.xpath("//table[contains(@class, 'infobox geography')]")
 
@@ -43,31 +40,6 @@ class XpathSpider(scrapy.Spider):
                 if header and data:
                     header = header.strip()
                     data = ' '.join([d.strip() for d in data if d.strip()]).strip()
+                    country_details[header] = data
 
-                    if 'Офіційні мови' in header:
-                        country_details['Офіційні мови'] = data
-                    elif 'Незалежність' in header:
-                        country_details['Незалежність'] = data
-                    elif 'Валюта' in header:
-                        country_details['Валюта'] = data
-                    elif 'Телефонний код' in header:
-                        country_details['Телефонний код'] = data
-
-            capital = response.xpath(
-                "(.//tr[th/a[contains(text(), 'Столиця')]]/td//a[not(contains(text(), 'найбільше місто'))]/text()"
-                " | .//tr[th[contains(text(), 'Столиця')]]/td//a[not(contains(text(), 'найбільше місто'))]/text()"
-                " | .//tr[th/a[contains(text(), 'Столиця')]]/td//text()"
-                " | .//tr[th[contains(text(), 'Столиця')]]/td//text())[1]"
-            ).get()
-
-            country_details['Столиця'] = capital.strip() if capital else 'Невідомо'
-
-        yield {
-            'Країна': country_name,
-            'URL': country_url,
-            'Столиця': country_details.get('Столиця', 'Невідомо'),
-            'Офіційні мови': country_details.get('Офіційні мови', 'Невідомо'),
-            'Незалежність': country_details.get('Незалежність', 'Невідомо'),
-            'Валюта': country_details.get('Валюта', 'Невідомо'),
-            'Телефонний код': country_details.get('Телефонний код', 'Невідомо')
-        }
+        yield country_details
