@@ -9,7 +9,8 @@ class XpathSpider(scrapy.Spider):
             'countries_xpath.json': {'format': 'json', 'encoding': 'utf8', 'indent': 4},
             'countries_xpath.xml': {'format': 'xml', 'encoding': 'utf8', 'indent': 4},
             'countries_xpath.csv': {'format': 'csv', 'encoding': 'utf8'},
-        }
+        },
+        'FEED_EXPORT_FIELDS': ['Країна', 'URL', 'Столиця', 'Офіційні мови', 'Незалежність', 'Валюта', 'Телефонний код']
     }
 
     def parse(self, response):
@@ -28,8 +29,11 @@ class XpathSpider(scrapy.Spider):
                 )
 
     def parse_country_info(self, response):
-        country_details = {}
+        country_name = response.meta['country_name']
+        country_url = response.meta['country_url']
+
         infobox = response.xpath("//table[contains(@class, 'infobox geography')]")
+        country_details = {}
 
         if infobox:
             rows = infobox.xpath(".//tr")
@@ -40,6 +44,39 @@ class XpathSpider(scrapy.Spider):
                 if header and data:
                     header = header.strip()
                     data = ' '.join([d.strip() for d in data if d.strip()]).strip()
-                    country_details[header] = data
 
-        yield country_details
+                    if "Столиця" in header or "(та найбільше місто)" in header:
+                        country_details['Столиця'] = data
+                    elif "Офіційні мови" in header:
+                        country_details['Офіційні мови'] = data
+                    elif "Незалежність" in header:
+                        country_details['Незалежність'] = data
+                    elif "Валюта" in header:
+                        country_details['Валюта'] = data
+                    elif "Телефонний код" in header:
+                        country_details['Телефонний код'] = data
+
+            # Додаткові перевірки для різних структур таблиці
+            if 'Столиця' not in country_details:
+                capital = infobox.xpath(".//td[b/a[@title='Столиця']]/following-sibling::td//a/text()").get()
+                if not capital:
+                    capital = infobox.xpath(".//td[b/a/text()='Столиця']/following-sibling::td//a/text()").get()
+                if capital:
+                    country_details['Столиця'] = capital.strip()
+                else:
+                    capital = infobox.xpath(".//td[contains(text(), 'Столиця')]/following-sibling::td//text()").get()
+                    if capital:
+                        country_details['Столиця'] = capital.strip()
+
+            if 'Столиця' not in country_details:
+                country_details['Столиця'] = 'Невідомо'
+
+        yield {
+            'Країна': country_name,
+            'URL': country_url,
+            'Столиця': country_details.get('Столиця', 'Невідомо'),
+            'Офіційні мови': country_details.get('Офіційні мови', 'Невідомо'),
+            'Незалежність': country_details.get('Незалежність', 'Невідомо'),
+            'Валюта': country_details.get('Валюта', 'Невідомо'),
+            'Телефонний код': country_details.get('Телефонний код', 'Невідомо')
+        }
