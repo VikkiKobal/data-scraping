@@ -1,4 +1,5 @@
 import scrapy
+
 class XpathSpider(scrapy.Spider):
     name = 'xpath_spider'
     start_urls = ['https://uk.wikipedia.org/wiki/Список_країн']
@@ -31,8 +32,8 @@ class XpathSpider(scrapy.Spider):
         country_name = response.meta['country_name']
         country_url = response.meta['country_url']
 
-        country_details = {}
         infobox = response.xpath("//table[contains(@class, 'infobox geography')]")
+        country_details = {}
 
         if infobox:
             rows = infobox.xpath(".//tr")
@@ -44,24 +45,31 @@ class XpathSpider(scrapy.Spider):
                     header = header.strip()
                     data = ' '.join([d.strip() for d in data if d.strip()]).strip()
 
-                    if 'Офіційні мови' in header:
+                    if "Столиця" in header or "(та найбільше місто)" in header:
+                        country_details['Столиця'] = data
+                    elif "Офіційні мови" in header:
                         country_details['Офіційні мови'] = data
-                    elif 'Незалежність' in header:
+                    elif "Незалежність" in header:
                         country_details['Незалежність'] = data
-                    elif 'Валюта' in header:
+                    elif "Валюта" in header:
                         country_details['Валюта'] = data
-                    elif 'Телефонний код' in header:
+                    elif "Телефонний код" in header:
                         country_details['Телефонний код'] = data
 
-            # Універсальний пошук столиці
-            capital = response.xpath(
-                "(.//tr[th/a[contains(text(), 'Столиця')]]/td//a[not(contains(text(), 'найбільше місто'))]/text()"
-                " | .//tr[th[contains(text(), 'Столиця')]]/td//a[not(contains(text(), 'найбільше місто'))]/text()"
-                " | .//tr[th/a[contains(text(), 'Столиця')]]/td//text()"
-                " | .//tr[th[contains(text(), 'Столиця')]]/td//text())[1]"
-            ).get()
+            # Додаткові перевірки для різних структур таблиці
+            if 'Столиця' not in country_details:
+                capital = infobox.xpath(".//td[b/a[@title='Столиця']]/following-sibling::td//a/text()").get()
+                if not capital:
+                    capital = infobox.xpath(".//td[b/a/text()='Столиця']/following-sibling::td//a/text()").get()
+                if capital:
+                    country_details['Столиця'] = capital.strip()
+                else:
+                    capital = infobox.xpath(".//td[contains(text(), 'Столиця')]/following-sibling::td//text()").get()
+                    if capital:
+                        country_details['Столиця'] = capital.strip()
 
-            country_details['Столиця'] = capital.strip() if capital else 'Невідомо'
+            if 'Столиця' not in country_details:
+                country_details['Столиця'] = 'Невідомо'
 
         yield {
             'Країна': country_name,
