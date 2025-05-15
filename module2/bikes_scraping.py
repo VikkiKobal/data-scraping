@@ -67,7 +67,7 @@ subcategory = find_element_safe(driver, "div.sub-katalogs div:nth-child(1) a")
 if subcategory:
     subcategory.click()
 else:
-    print("❌ Не знайдено підкатегорію")
+    print("Не знайдено підкатегорію")
     driver.quit()
 
 all_bikes = []
