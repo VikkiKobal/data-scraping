@@ -128,7 +128,7 @@ for page in range(0, 47):
 
     print(f" Всього пропозицій: {len(all_bikes)}")
 
-with open("ek_bikes.csv", "w", newline="", encoding="utf-8") as f:
+with open("bikes.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(["Модель", "Зображення", "Магазин", "Місто", "Ціна"])
     writer.writerows(all_bikes)
