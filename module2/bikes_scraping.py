@@ -133,5 +133,5 @@ with open("bikes.csv", "w", newline="", encoding="utf-8") as f:
     writer.writerow(["Модель", "Зображення", "Магазин", "Місто", "Ціна"])
     writer.writerows(all_bikes)
 
-print(f"📄 Усього зібрано: {len(all_bikes)} пропозицій.")
+print(f"Усього зібрано: {len(all_bikes)} пропозицій.")
 driver.quit()
